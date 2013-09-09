@@ -1,0 +1,169 @@
+
+Introduction
+============
+
+This README file describes the software used in the paper "Decrypting
+Classical Cipher Text Using Markov Chain Monte Carlo", by Jian Chen and
+Jeffrey S. Rosenthal (University of Toronto).  This document include the
+instructions to build and run the program on Unix and Windows machines.
+
+This software is licensed for general copying, distribution
+and modification according to the GNU General Public License
+(http://www.gnu.org/copyleft/gpl.html).
+
+You may contact us with questions:
+jchen@utstat.utoronto.ca and jeff@math.toronto.edu
+
+
+Instructions on Unix Machines
+=============================
+
+Summary of steps:
+- Build the program
+- Download the test plain text and reference text
+- Run the program
+- Change parameters and rerun the program
+
+Notes:
+- The following procedures have been successfully tested on MacOS 10.3.0 and Ubuntu 8.04.3.
+- You should have the permission to run 'make', 'g++' and 'unzip' commands in your Unix machine. Otherwise, please talk to your administrator.
+
+
+Build the program
+-----------------
+Use 'unzip' command to extract the source codes. Then run 'make' to build the program. You should get an executable file 'deciphermcmc' after a successful build.
+
+$ make
+g++ -g -c deciphermcmc.cpp
+...
+g++    -c -o common/ArrayUtil.o common/ArrayUtil.cpp
+g++    -c -o common/ConvUtil.o common/ConvUtil.cpp
+g++    -c -o common/MathUtil.o common/MathUtil.cpp
+g++    -c -o common/RandUtil.o common/RandUtil.cpp
+g++    -c -o common/SortUtil.o common/SortUtil.cpp
+g++    -c -o common/SysUtil.o common/SysUtil.cpp
+g++    -c -o common/TextFileUtil.o common/TextFileUtil.cpp
+g++    -c -o substitution/PairSubstitutionCipher.o substitution/PairSubstitutionCipher.cpp
+g++    -c -o substitution/SubstitutionCipher.o substitution/SubstitutionCipher.cpp
+g++    -c -o transposition/TranspositionCipher.o transposition/TranspositionCipher.cpp
+g++    -c -o substitution-transpotition/SubstitutionTranspositionCipher.o substitution-transpotition/SubstitutionTranspositionCipher.cpp
+g++ deciphermcmc.o common/ArrayUtil.o common/ConvUtil.o common/MathUtil.o common/RandUtil.o common/SortUtil.o common/SysUtil.o common/TextFileUtil.o substitution/PairSubstitutionCipher.o substitution/SubstitutionCipher.o transposition/TranspositionCipher.o substitution-transpotition/SubstitutionTranspositionCipher.o -o deciphermcmc
+$ ls -al deciphermcmc
+-rwxr-xr-x 1 cinc cinc 127276 2010-05-15 21:54 deciphermcmc
+
+Note: 
+- To clean and rebuild, run 'make clean; make'
+
+
+Download and preprocess the test reference and cipher texts
+-----------------------------------------------------------
+For our tests, we use 'Oliver Twist' as the plain text and 'War and Peace' as the reference text. You can download them from 'Project Gutenberg' Website. E.g.:
+
+$ wget http://www.gutenberg.org/files/730/730.txt   -O olivertwist.txt
+$ wget http://www.gutenberg.org/files/2600/2600.txt -O warnpc12.txt
+
+We will use 'simplify.c' to do some preprocessing (remove punctuations e.t.c.). To compile the simplify.c, run:
+$ cc -lm simplify.c -o simplify
+
+Then run 'simiplify' against to 2 texts:
+$ ./simplify <warnpc12.txt    >warorig
+$ ./simplify <olivertwist.txt >oliverorig
+
+Now we have 2 text 'warorig' and 'oliverorig' which only contains the 26 letters and spaces. Copy them to the same folder as the 'deciphermcmc' program.
+
+
+Run the program
+---------------
+Simply run:
+$ ./deciphermcmc
+
+By default the program will run 100 times. Each time it will do a full encryption/decryption process on the plain text. At the end of 100 runs the average accuracy and no. of successful runs will be printed.
+
+
+Change parameters and rerun the program
+---------------------------------------
+General procedures to modify parameters and rerun the program:
+- change code in deciphermcmc.cpp (Usually you only need to change this file)
+- build the program (run 'make'). Or if you prefer a clean build (run 'make clean; make')
+- rerun the program ('./deciphermcmc')
+
+- To run encryption/decription for different ciphers, uncomment corresponding lines in the main() function:
+  - substitution cipher:
+      testSubstitutionCipher();
+  - transposition cipher:
+      testTranspositionCipher();
+  - substitution-transposition cipher:
+      testSubstitutionTranspositionCipher();
+
+- To change the algorithms used in the attack, uncomment the corresponding lines (and comment out other decryption lines):
+  - Uni-gram attack (only available for substitution cipher)
+    string decryptedText = sCipher->decryptUsingSingleFrequency(ciphertext, trainingtext);
+  - Bi-gram attack (for both substitution cipher and transposition cipher)
+    string decryptedText = sCipher->decryptUsingPairFrequency(ciphertext, trainingtext, numIteration);
+  - Tri-gram attack (only available for substitution cipher)
+    string decryptedText = sCipher->decryptUsingTripleFrequency(ciphertext, trainingtext, numIteration);
+  - final attack
+    string decryptedText = sCipher->decrypt_FinalVersion(ciphertext, trainingtext, numIteration);
+
+- For substitution cipher and transposition cipher, The following parameters can be changed.
+    string plaintext = TextFileUtil::readTextFromFile("oliverorig");    // plain text
+    string trainingtext = TextFileUtil::readTextFromFile("warorig");    // reference text
+
+    int noOfRun = 10;                   // no. of runs
+    int numIteration = 10*1000;         // no. of iterations in one run
+    int keylength = 20;                 // key length (only for transposition cipher)
+    int ciphertextlength = 2*1000;      // length of cipher text used in decryption
+
+- The substitution-transposition cipher has several additional parameters:
+    int noOfRun = 100;
+    int keylengthTransposisiton = 40;           // transposition key length
+    int numCycle = 5;                           // no. of cycles for bi-gram attacks on substitution and transposition cipher
+    int numIterationSubstitution  = 10*1000;    // no. of iterations for bi-gram attacks on substitution cipher
+    int numIterationTransposition = 100*1000;   // no. of iterations for bi-gram attacks on transposition cipher
+    int ciphertextlength = 2*1000;
+
+
+
+Instructions on Windows Machine
+===============================
+The program can also run on a Windows machine. But it's only for demostration purpose because a different random number geneator is used.
+
+Prerequisite
+------------
+Please install cygwin which contains 'make', 'unzip' commands. 
+http://www.cygwin.com/
+
+For the compiler, we use g++ compiler from 'MinGW'.
+http://www.mingw.org/
+
+And make sure 'make', 'g++' commands can be found in your PATH.
+
+
+Modification of the code
+------------------------
+The drand48() and srand48() functions are not available in Windows.
+So please look for the following codes in common/RandUtil.cpp and make corresponding changes.
+
+double RandUtil::newRand() {
+        return drand48();                     // unix version
+        //return (double(rand()) / RAND_MAX); // windows version
+}
+
+void RandUtil::seedRand() {
+        cout << "Initialize Random Seed..." << endl;
+        struct timeval tmptv;
+        gettimeofday (&tmptv, (struct timezone *)NULL);
+        int seed = (int) tmptv.tv_usec;
+        srand48(seed);  // unix version
+        //srand(seed);  // windows version
+}
+
+
+Build and Run the Program
+-------------------------
+Run 'make' from 'bash':
+bash-3.2$ make
+
+Others are the same as Unix version.
+
+
